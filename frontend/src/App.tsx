@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { fetchAnalysis, sendAction, startGame, startNextRound } from "./api";
+import { fetchAnalysis, sendAction, startGame, startNextRound, isAuthenticated, logout, AuthResponse, getCurrentUser } from "./api";
 import { ShoeCompositionChart } from "./components/ShoeCompositionChart";
 import { GameControls } from "./components/GameControls";
 import { Hand } from "./components/Hand";
+import { Auth } from "./components/Auth";
+import { History } from "./components/History";
 import { AnalysisResult, GameAction, GameState } from "./types";
 
 // 格式化牌值：將 11、12、13 轉換為 J、Q、K
@@ -21,6 +23,9 @@ function App() {
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showAnalysis, setShowAnalysis] = useState(true);
+  const [authenticated, setAuthenticated] = useState(isAuthenticated());
+  const [user, setUser] = useState<AuthResponse | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('darkMode');
     return saved ? JSON.parse(saved) : false;
@@ -49,6 +54,26 @@ function App() {
     localStorage.setItem('darkMode', JSON.stringify(darkMode));
     document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
   }, [darkMode]);
+
+  // 如果已登入但用戶信息為空，嘗試獲取用戶信息
+  useEffect(() => {
+    if (authenticated && !user) {
+      getCurrentUser()
+        .then((userInfo) => {
+          // 如果獲取成功，設置用戶信息（但我們只有 user_id，沒有 username）
+          // 所以我們需要從 token 中解析，或者保持 user 為 null
+          // 實際上，我們可以保持 user 為 null，因為 username 不是必需的
+        })
+        .catch((err) => {
+          // 如果獲取失敗（如 token 過期），清除認證狀態
+          console.error("獲取用戶信息失敗:", err);
+          if (err instanceof Error && (err.message.includes("401") || err.message.includes("無效"))) {
+            logout();
+            setAuthenticated(false);
+          }
+        });
+    }
+  }, [authenticated, user]);
 
   const handleStartGame = async () => {
     setLoading(true);
@@ -99,11 +124,91 @@ function App() {
     setError(null);
   };
 
+  const handleLogin = (authData: AuthResponse) => {
+    setUser(authData);
+    setAuthenticated(true);
+    // 確保 token 已保存（應該已經在 login 函數中保存了）
+    // 但我們可以再次確認
+    if (!isAuthenticated()) {
+      console.error("登入後 token 未正確保存");
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    setAuthenticated(false);
+    setUser(null);
+    setShowHistory(false);
+  };
+
+  // 如果未登入，顯示登入界面
+  if (!authenticated) {
+    return (
+      <div className="app" data-theme={darkMode ? 'dark' : 'light'}>
+        <header>
+          <h1>Blackjack 模擬訓練</h1>
+          <p>請先登入以開始訓練並查看歷史記錄</p>
+        </header>
+        <Auth onLogin={handleLogin} />
+        <section className="config">
+          <label>
+            <input
+              type="checkbox"
+              checked={darkMode}
+              onChange={(evt) => setDarkMode(evt.target.checked)}
+            />
+            深色模式
+          </label>
+        </section>
+      </div>
+    );
+  }
+
+  // 如果顯示歷史記錄
+  if (showHistory) {
+    return (
+      <div className="app" data-theme={darkMode ? 'dark' : 'light'}>
+        <header>
+          <h1>Blackjack 模擬訓練</h1>
+          <div className="user-info">
+            <span>歡迎，{user?.username || "用戶"}</span>
+            <button onClick={() => setShowHistory(false)} className="secondary">
+              返回遊戲
+            </button>
+            <button onClick={handleLogout} className="secondary">
+              登出
+            </button>
+          </div>
+        </header>
+        <History />
+        <section className="config">
+          <label>
+            <input
+              type="checkbox"
+              checked={darkMode}
+              onChange={(evt) => setDarkMode(evt.target.checked)}
+            />
+            深色模式
+          </label>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div className="app" data-theme={darkMode ? 'dark' : 'light'}>
       <header>
         <h1>Blackjack 模擬訓練</h1>
         <p>依據企劃書完成的最基礎版：支援指定牌副數、基本動作、蒙地卡羅建議。</p>
+        <div className="user-info">
+          <span>歡迎，{user?.username || "用戶"}</span>
+          <button onClick={() => setShowHistory(true)} className="secondary">
+            查看歷史記錄
+          </button>
+          <button onClick={handleLogout} className="secondary">
+            登出
+          </button>
+        </div>
       </header>
 
       <section className="config">

@@ -3,10 +3,6 @@ from Game import *
 from Simulator import Simulator
 from Hand import Hand
 from Shoe import Shoe
-import os
-import sys
-sys.path.append(os.path.abspath(os.path.join(__file__, '..')))
-
 
 class Manager():
     def __init__(self, num_decks: int = 6, num_sim: int = 10000, threshold_ratio: float = 0.5) -> None:
