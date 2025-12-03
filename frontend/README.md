@@ -5,7 +5,7 @@
 ## 開發方式
 
 ```bash
-cd /Users/yhk/Desktop/大四上/Web/Final/frontend
+cd frontend
 npm install
 npm run dev
 ```
@@ -19,5 +19,5 @@ npm run dev
 - 執行 Hit / Stand / Double
 - 呼叫 `/analysis` API 取得蒙地卡羅建議與勝率
 
-如需在生產環境部署，可先執行 `npm run build` 產出靜態檔案。*** End Patch```???
+如需在生產環境部署，可先執行 `npm run build` 產出靜態檔案。
 
