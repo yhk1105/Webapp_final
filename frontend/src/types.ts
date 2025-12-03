@@ -37,6 +37,7 @@ export interface GameState {
   can_start_next_round: boolean;
 
   mistakes: DecisionMistake[];
+  round_mistakes: DecisionMistake[];
   respect_shoe_state: boolean;
   shoe_composition: Record<string, number>;
 }

@@ -1,5 +1,5 @@
 import uuid
-from typing import List, Optional, Dict
+from typing import Dict
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -13,34 +13,43 @@ app = FastAPI()
 # --- CORS Configuration ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],  # Vite 開發伺服器
+    allow_origins=["http://localhost:5173",
+                   "http://127.0.0.1:5173"],  # Vite 開發伺服器
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # --- Database Initialization ---
+
+
 @app.on_event("startup")
 def startup_event():
     """サーバー起動時にデータベースを準備する"""
     database.init_db()
 
+
 # --- 1. In-memory Game Storage ---
 games: Dict[str, Manager] = {}
 
 # --- 2. Data Models (Pydantic) ---
+
+
 class CreateGameRequest(BaseModel):
     num_decks: int
+
 
 class ActionRequest(BaseModel):
     action: str
 
 # --- 3. Helper Function ---
+
+
 def format_game_state(game_id: str, gm: Manager, mistakes: list = None):
     # 手札変換
     p_cards = [str(c) if c != 1 else "A" for c in gm.player_hand.cards]
     d_cards = [str(c) if c != 1 else "A" for c in gm.dealer_hand.cards]
-    
+
     dealer_display = []
     if not gm.finish and len(d_cards) > 0:
         dealer_display = [d_cards[0], "??"]
@@ -49,26 +58,45 @@ def format_game_state(game_id: str, gm: Manager, mistakes: list = None):
 
     result_str = None
     if gm.finish:
-        if gm.result > 0: result_str = "player"
-        elif gm.result < 0: result_str = "dealer"
-        else: result_str = "push"
+        if gm.result > 0:
+            result_str = "player"
+        elif gm.result < 0:
+            result_str = "dealer"
+        else:
+            result_str = "push"
 
     # --- 計算ロジック ---
     remaining = gm.shoe.remaining()
     initial = gm.initial_shoe_size
     shoe_ratio = remaining / initial if initial > 0 else 0
-    
+
     # セッション終了判定（残り枚数が閾値以下 かつ ラウンド終了時）
     session_completed = (remaining <= gm.stop_threshold) and gm.finish
 
     message = "Game in progress"
-    if gm.finish: message = "Round finished"
-    if session_completed: message = "Session Completed! Please start a new game."
+    if gm.finish:
+        message = "Round finished"
+    if session_completed:
+        message = "Session Completed! Please start a new game."
 
-    # Shoe Composition (ラウンド開始前か終了後のみ更新)
-    shoe_comp = {}
-    if gm.finish or len(gm.actions_taken) == 0: 
-         shoe_comp = gm.get_shoe_composition()
+    # Shoe Composition (始終更新以確保前端能正確顯示)
+    shoe_comp = gm.get_shoe_composition()
+
+    # 決定返回的錯誤記錄
+    # mistakes: 用於訓練摘要（所有錯誤）
+    # round_mistakes: 用於本局檢討（當前局的錯誤）
+    if session_completed:
+        # 訓練結束時，mistakes 包含所有錯誤，round_mistakes 包含當前局的錯誤
+        final_mistakes = gm.all_mistakes
+        round_mistakes = gm.current_round_mistakes
+    elif gm.finish:
+        # 單局結束時，mistakes 和 round_mistakes 都是當前局的錯誤
+        final_mistakes = gm.current_round_mistakes
+        round_mistakes = gm.current_round_mistakes
+    else:
+        # 遊戲進行中，顯示當前動作的錯誤（如果有）
+        final_mistakes = mistakes or []
+        round_mistakes = mistakes or []
 
     return {
         "game_id": game_id,
@@ -81,7 +109,7 @@ def format_game_state(game_id: str, gm: Manager, mistakes: list = None):
         "result": result_str,
         "message": message,
         "available_actions": ["hit", "stand", "double"] if (not gm.finish and not session_completed) else [],
-        
+
         # --- 不足していたデータを追加 ---
         "shoe_remaining": remaining,
         "shoe_ratio": round(shoe_ratio, 2),
@@ -90,12 +118,14 @@ def format_game_state(game_id: str, gm: Manager, mistakes: list = None):
         "rounds_played": gm.rounds_played,
         "session_completed": session_completed,
         "can_start_next_round": gm.finish and not session_completed,
-        "actions_taken": gm.actions_taken, # アクション履歴
+        "actions_taken": gm.actions_taken,  # アクション履歴
         "shoe_composition": shoe_comp,     # カードカウンティング情報
-        "mistakes": mistakes or []
+        "mistakes": final_mistakes,        # 用於訓練摘要（所有錯誤）
+        "round_mistakes": round_mistakes   # 用於本局檢討（當前局的錯誤）
     }
 
 # --- 4. API Endpoints ---
+
 
 @app.post("/api/games")
 def start_game(request: CreateGameRequest):
@@ -107,6 +137,7 @@ def start_game(request: CreateGameRequest):
     games[game_id] = gm
     return format_game_state(game_id, gm)
 
+
 @app.get("/api/games/{game_id}")
 def get_game_state(game_id: str):
     """Get current game state"""
@@ -115,14 +146,15 @@ def get_game_state(game_id: str):
     gm = games[game_id]
     return format_game_state(game_id, gm)
 
+
 @app.post("/api/games/{game_id}/action")
 def perform_action(game_id: str, request: ActionRequest):
     """Perform action and SAVE to database"""
     if game_id not in games:
         raise HTTPException(status_code=404, detail="Game not found")
-    
+
     gm = games[game_id]
-    
+
     if gm.finish:
         raise HTTPException(status_code=400, detail="Round is already over")
 
@@ -130,23 +162,32 @@ def perform_action(game_id: str, request: ActionRequest):
     rec = gm.get_recommendation()
     best_action = rec["best_action"]
     user_action = request.action.upper()
-    
+
     # Mistake check
     is_mistake = (user_action != best_action)
     mistakes = []
-    
+
     # Current Hand Info for logging
     current_p_hand = [str(c) if c != 1 else "A" for c in gm.player_hand.cards]
-    current_d_upcard = str(gm.dealer_hand.cards[0]) if gm.dealer_hand.cards else None
+    current_d_upcard = str(
+        gm.dealer_hand.cards[0]) if gm.dealer_hand.cards else None
 
     if is_mistake:
+        # decision_index 是當前回合中的第幾步決策（從 1 開始）
+        # 在執行動作前，actions_taken 的長度就是已執行的動作數
+        decision_index = len(gm.actions_taken) + 1
         mistake_record = {
             "chosen_action": user_action.lower(),
             "recommended_action": best_action.lower(),
             "player_hand": current_p_hand,
-            "dealer_upcard": current_d_upcard
+            "dealer_upcard": current_d_upcard,
+            "round_index": gm.rounds_played,
+            "decision_index": decision_index
         }
         mistakes.append(mistake_record)
+        # 同時添加到當前回合和累積的錯誤列表中
+        gm.current_round_mistakes.append(mistake_record)
+        gm.all_mistakes.append(mistake_record)
 
     # <--- NEW: Save to Database --->
     database.log_action(
@@ -170,6 +211,7 @@ def perform_action(game_id: str, request: ActionRequest):
 
     return format_game_state(game_id, gm, mistakes=mistakes)
 
+
 @app.post("/api/games/{game_id}/next-round")
 def next_round(game_id: str):
     """Proceed to the next round"""
@@ -180,10 +222,12 @@ def next_round(game_id: str):
         raise HTTPException(status_code=400, detail="Round is not over yet")
     remaining = gm.shoe.remaining()
     if remaining <= gm.stop_threshold:
-        raise HTTPException(status_code=400, detail="Session completed. Please start a new game.")
+        raise HTTPException(
+            status_code=400, detail="Session completed. Please start a new game.")
     gm.start_round()
     gm.deal_initial()
     return format_game_state(game_id, gm)
+
 
 @app.get("/api/games/{game_id}/analysis")
 def get_analysis(game_id: str):

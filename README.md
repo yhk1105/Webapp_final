@@ -1,4 +1,4 @@
-# Blackjack 訓練系統
+# Blackjack 模擬訓練系統
 
 一個基於 Web 技術的 21 點（Blackjack）訓練應用程式，幫助玩家學習基本策略並提升決策能力。系統使用蒙地卡羅模擬來提供即時的動作建議與勝率分析。
 
@@ -192,4 +192,5 @@ npm run dev
 ---
 
 如有問題或建議，歡迎提出 Issue 或 Pull Request！
+
 

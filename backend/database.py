@@ -46,3 +46,32 @@ def log_action(game_id, p_hand, d_upcard, taken, recommended, is_mistake):
     
     conn.commit()
     conn.close()
+
+def get_all_mistakes(game_id):
+    """指定されたgame_idのすべてのミスを取得する"""
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    
+    c.execute('''
+        SELECT player_hand, dealer_upcard, action_taken, action_recommended, timestamp
+        FROM action_logs
+        WHERE game_id = ? AND is_mistake = 1
+        ORDER BY timestamp
+    ''', (game_id,))
+    
+    results = c.fetchall()
+    conn.close()
+    
+    mistakes = []
+    for row in results:
+        p_hand_json, d_upcard, taken, recommended, timestamp = row
+        p_hand = json.loads(p_hand_json) if p_hand_json else []
+        mistakes.append({
+            "player_hand": p_hand,
+            "dealer_upcard": d_upcard,
+            "chosen_action": taken.lower(),
+            "recommended_action": recommended.lower(),
+            "timestamp": timestamp
+        })
+    
+    return mistakes

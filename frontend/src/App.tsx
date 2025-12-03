@@ -5,6 +5,14 @@ import { GameControls } from "./components/GameControls";
 import { Hand } from "./components/Hand";
 import { AnalysisResult, GameAction, GameState } from "./types";
 
+// 格式化牌值：將 11、12、13 轉換為 J、Q、K
+function formatCard(card: string): string {
+  if (card === "11") return "J";
+  if (card === "12") return "Q";
+  if (card === "13") return "K";
+  return card;
+}
+
 function App() {
   const [numDecks, setNumDecks] = useState(4);
   const [game, setGame] = useState<GameState | null>(null);
@@ -94,7 +102,7 @@ function App() {
   return (
     <div className="app" data-theme={darkMode ? 'dark' : 'light'}>
       <header>
-        <h1>Blackjack 訓練</h1>
+        <h1>Blackjack 模擬訓練</h1>
         <p>依據企劃書完成的最基礎版：支援指定牌副數、基本動作、蒙地卡羅建議。</p>
       </header>
 
@@ -162,11 +170,11 @@ function App() {
               <p className="hint">系統會在牌堆剩下一半時自動結束訓練。</p>
             </div>
           )}
-          {game.is_over && game.mistakes.length > 0 && (
+          {game.is_over && game.round_mistakes.length > 0 && (
              <section className="round-mistakes">
                <h3>本局檢討</h3>
                <ul>
-                 {game.mistakes.map((mistake) => (
+                 {game.round_mistakes.map((mistake) => (
                    <li key={`${mistake.round_index}-${mistake.decision_index}`}>
                      第 {mistake.decision_index} 步：建議 <strong>{mistake.recommended_action}</strong>，但你選擇了 {mistake.chosen_action}。
                    </li>
@@ -193,20 +201,25 @@ function App() {
                 <thead>
                   <tr>
                     <th>動作</th>
-                    <th>勝率</th>
-                    <th>和局</th>
-                    <th>敗率</th>
+                    <th>EV</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {Object.entries(analysis.evaluations).map(([action, stats]) => (
-                    <tr key={action} className={analysis.best_action === action ? "best" : ""}>
-                      <td>{action}</td>
-                      <td>{(stats.win_rate * 100).toFixed(1)}%</td>
-                      <td>{(stats.push_rate * 100).toFixed(1)}%</td>
-                      <td>{(stats.loss_rate * 100).toFixed(1)}%</td>
-                    </tr>
-                  ))}
+                  {Object.entries(analysis.evaluations).map(([action, stats]) => {
+                    // 計算 EV：EV = (勝率 - 敗率) * 倍數
+                    // stand 或 hit: 倍數為 1
+                    // double: 倍數為 2
+                    const multiplier = action === "double" ? 2 : 1;
+                    const ev = (stats.win_rate - stats.loss_rate) * multiplier;
+                    return (
+                      <tr key={action} className={analysis.best_action === action ? "best" : ""}>
+                        <td>{action}</td>
+                        <td className={ev > 0 ? "ev-positive" : ev < 0 ? "ev-negative" : ""}>
+                          {ev > 0 ? "+" : ""}{ev.toFixed(3)}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </>
@@ -227,7 +240,7 @@ function App() {
                   <li key={`${mistake.round_index}-${mistake.decision_index}`}>
                     第 {mistake.round_index} 局第 {mistake.decision_index} 步，建議採用{" "}
                     <strong>{mistake.recommended_action}</strong>，實際操作為 {mistake.chosen_action}。手牌：
-                    {mistake.player_hand.join(", ")}，莊家明牌：{mistake.dealer_upcard ?? "?"}
+                    {mistake.player_hand.map(formatCard).join(", ")}，莊家明牌：{formatCard(mistake.dealer_upcard ?? "?")}
                   </li>
                 ))}
               </ol>
