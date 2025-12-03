@@ -1,0 +1,340 @@
+/* CSS Variables for Light Theme */
+:root {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-card: #eef2ff;
+  --bg-table-header: #e2e8f0;
+  --bg-table-row-even: #ffffff;
+  --bg-table-best: #dbeafe;
+  
+  --text-primary: #0f172a;
+  --text-secondary: #1e293b;
+  --text-muted: #475569;
+  
+  --border-primary: #cbd5f5;
+  --border-card: #94a3b8;
+  --border-dashed: #cbd5f5;
+  
+  --btn-primary-bg: #2563eb;
+  --btn-primary-text: #ffffff;
+  --btn-secondary-bg: #cbd5f5;
+  --btn-secondary-text: #1e3a8a;
+  
+  --accent-primary: #2563eb;
+  --error-color: #b91c1c;
+  
+  font-family: "Segoe UI", "PingFang TC", sans-serif;
+  line-height: 1.5;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+}
+
+/* Dark Theme */
+[data-theme="dark"] {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-card: #1e3a5f;
+  --bg-table-header: #334155;
+  --bg-table-row-even: #1e293b;
+  --bg-table-best: #1e3a8a;
+  
+  --text-primary: #f1f5f9;
+  --text-secondary: #e2e8f0;
+  --text-muted: #94a3b8;
+  
+  --border-primary: #334155;
+  --border-card: #475569;
+  --border-dashed: #475569;
+  
+  --btn-primary-bg: #3b82f6;
+  --btn-primary-text: #ffffff;
+  --btn-secondary-bg: #334155;
+  --btn-secondary-text: #93c5fd;
+  
+  --accent-primary: #3b82f6;
+  --error-color: #f87171;
+}
+
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.app {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+  min-height: 100vh;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+header h1 {
+  color: var(--text-primary);
+}
+
+header p {
+  color: var(--text-muted);
+}
+
+.config {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.config input[type="number"] {
+  width: 80px;
+  margin-left: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-card);
+  border-radius: 4px;
+}
+
+.config label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.config label input[type="checkbox"] {
+  margin: 0;
+  cursor: pointer;
+}
+
+button {
+  padding: 0.5rem 1.2rem;
+  border-radius: 999px;
+  border: none;
+  background-color: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.1s ease;
+}
+
+button:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.secondary {
+  background-color: var(--btn-secondary-bg);
+  color: var(--btn-secondary-text);
+}
+
+.table {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.hand {
+  border: 1px solid var(--border-primary);
+  border-radius: 16px;
+  padding: 1rem;
+  background-color: var(--bg-secondary);
+}
+
+.hand-highlight {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.hand-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.hand-header h3 {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.hand-header .score {
+  color: var(--text-muted);
+}
+
+.cards {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.card {
+  padding: 1rem 1.2rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-card);
+  background-color: var(--bg-card);
+  min-width: 4rem;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.placeholder {
+  text-align: center;
+  padding: 2rem;
+  border: 1px dashed var(--border-dashed);
+  border-radius: 12px;
+  background-color: var(--bg-secondary);
+  color: var(--text-muted);
+}
+
+.status {
+  text-align: center;
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+}
+
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.action-btn {
+  min-width: 140px;
+}
+
+.analysis, .summary, .round-mistakes {
+  border-top: 1px solid var(--border-primary);
+  padding-top: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.analysis h2, .summary h2, .round-mistakes h3 {
+  color: var(--text-primary);
+}
+
+.summary ol, .round-mistakes ul {
+  padding-left: 1.2rem;
+  color: var(--text-secondary);
+}
+
+.hint {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.next-round {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 0.5rem;
+  background-color: var(--bg-secondary);
+}
+
+th, td {
+  text-align: center;
+  padding: 0.6rem;
+  color: var(--text-primary);
+}
+
+thead {
+  background-color: var(--bg-table-header);
+}
+
+tbody tr:nth-of-type(even) {
+  background-color: var(--bg-table-row-even);
+}
+
+tbody tr.best {
+  background-color: var(--bg-table-best);
+}
+
+.error {
+  color: var(--error-color);
+  text-align: center;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background-color: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--error-color);
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .app {
+    padding: 1rem 0.75rem 2rem;
+  }
+  
+  .config {
+    gap: 0.75rem;
+  }
+  
+  .config label {
+    font-size: 0.85rem;
+  }
+  
+  button {
+    padding: 0.4rem 1rem;
+    font-size: 0.9rem;
+  }
+  
+  .card {
+    padding: 0.75rem 1rem;
+    font-size: 1.25rem;
+    min-width: 3rem;
+  }
+  
+  .hand {
+    padding: 0.75rem;
+  }
+  
+  table {
+    font-size: 0.9rem;
+  }
+  
+  th, td {
+    padding: 0.4rem 0.2rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .table {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .app {
+    padding: 3rem 2rem 5rem;
+  }
+}
+
